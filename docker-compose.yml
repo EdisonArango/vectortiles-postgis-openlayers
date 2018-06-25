@@ -1,0 +1,24 @@
+version: '3.1'
+
+services:
+  web:
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - ./src:/src
+    command: bash -c "flask run --host=0.0.0.0"
+    ports:
+      - "5000:5000"
+
+  db:
+    image: mdillon/postgis:latest
+    environment:
+      POSTGRES_DB: geo24
+      POSTGRES_USER: geo
+      POSTGRES_PASSWORD: geo
+
+  pg_admin:
+    image: chorss/docker-pgadmin4
+    ports:
+      - "5050:5050"
