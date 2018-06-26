@@ -6,6 +6,7 @@
 
 ### Agregar datos a Postgis
 ##### 1. Crear una carpeta llamada `shapefiles` en la raíz del proyecto
+> Agrega allí los archivos shp junto con los dbf y shx
 ##### 2. Ingresar al contenedor de postgis
 ```docker exec -it vpo_postgis bash```
 
