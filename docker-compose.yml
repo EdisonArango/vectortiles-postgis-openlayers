@@ -7,18 +7,27 @@ services:
       - db
     volumes:
       - ./src:/src
-    command: bash -c "flask run --host=0.0.0.0"
+    command: python flask_mvt.py
     ports:
       - "5000:5000"
 
   db:
     image: mdillon/postgis:latest
+    container_name: vpo_postgis
     environment:
       POSTGRES_DB: geo24
       POSTGRES_USER: geo
       POSTGRES_PASSWORD: geo
+    volumes:
+      - postgisdata:/var/lib/postgresql/data
+      - ./shapefiles:/shapefiles
+    ports:
+      - "5432:5432"
 
   pg_admin:
     image: chorss/docker-pgadmin4
     ports:
       - "5050:5050"
+
+volumes:
+  postgisdata:

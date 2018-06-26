@@ -18,6 +18,9 @@ DB_USER = 'geo'
 DB_PASSWORD = 'geo'
 DB_NAME = 'geo24'
 
+GEO_TABLE = 'regiones_chile'
+ID_COLUMN = 'gid'
+NAME_COLUMN = 'nombre'
 
 def tile_ul(x, y, z):
     n = 2.0 ** z
@@ -39,7 +42,9 @@ def get_tile(z, x, y):
         conn = psycopg2.connect('dbname={0} user={1} password={2} host={3}'.format(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST))
         cur = conn.cursor()
 
-        query = "SELECT ST_AsMVT(tile) FROM (SELECT id, name, ST_AsMVTGeom(geom, ST_Makebox2d(ST_transform(ST_SetSrid(ST_MakePoint(%s,%s),4326),3857),ST_transform(ST_SetSrid(ST_MakePoint(%s,%s),4326),3857)), 4096, 0, false) AS geom FROM admin_areas) AS tile"
+        query = "SELECT ST_AsMVT(tile) FROM " \
+                "(SELECT {id_column}, {name_column}, ST_AsMVTGeom(geom, ST_Makebox2d(ST_transform(ST_SetSrid(ST_MakePoint(%s,%s),4326),3857),ST_transform(ST_SetSrid(ST_MakePoint(%s,%s),4326),3857)), 4096, 0, false)" \
+                " AS geom FROM {table}) AS tile".format(table=GEO_TABLE, id_column=ID_COLUMN, name_column=NAME_COLUMN)
         cur.execute(query, (xmin, ymin, xmax, ymax))
         tile = str(cur.fetchone()[0])
 
@@ -70,3 +75,7 @@ def tiles(z=0, x=0, y=0):
     response = make_response(tile)
     response.headers['Content-Type'] = "application/octet-stream"
     return response
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, threaded=True)

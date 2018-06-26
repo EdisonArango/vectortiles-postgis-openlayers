@@ -6,14 +6,37 @@
         <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
     </head>
     <body>
-        <div id="map"class="map"></div>
-        <script src="https://openlayers.org/en/v4.6.5/build/ol.js" type="text/javascript"></script>
+        <style>
+            #map {
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                padding: 10px;
+            }
+        </style>
+        <div id="map" class="map"></div>
+        <script src="https://openlayers.org/en/v4.6.5/build/ol-debug.js" type="text/javascript"></script>
         <script>
+            // Projection according to shp files
+            var myProjection = new ol.proj.Projection({
+                code: 'EPSG:32719',
+                // The extent is used to determine zoom level 0. Recommended values for a
+                // projection's validity extent can be found at https://epsg.io/.
+                extent: [441867.78, 1116915.04, 833978.56, 10000000.00],
+                units: 'm'
+            });
+            ol.proj.addProjection(myProjection);
             var map = new ol.Map({
                 target: "map",
                 view: new ol.View({
-                    center: [1253220.67184,5430658.10783],
-                    zoom: 8
+                    projection: 'EPSG:4326',
+                    // Santiago de Chile [lon, lat]
+                    center: [-71.132011, -31.728167],
+                    // center: ol.proj.fromLonLat([-70.9100261, -33.4724727]),
+                    zoom: 2
+                    // projection: myProjection
                 }),
                 layers: [
                     new ol.layer.Tile({
@@ -22,7 +45,9 @@
                     new ol.layer.VectorTile({
                         source: new ol.source.VectorTile({
                             format: new ol.format.MVT(),
-                            url: "{{ url_for('tiles') }}/{z}/{x}/{y}"
+                            url: "{{ url_for('tiles') }}/{z}/{x}/{y}",
+                            // projection: myProjection
+                            // projection: 'EPSG:4326'
                         }),
                         style: function(feature, res) {
                             return new ol.style.Style({

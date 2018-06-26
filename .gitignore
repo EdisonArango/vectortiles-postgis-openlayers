@@ -1,3 +1,7 @@
 venv
 .env
 .idea
+src/cache
+shapefiles
+.DS_Store
+*.pyc

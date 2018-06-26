@@ -1,2 +1,2 @@
 flask
-psycopg2
+psycopg2==2.7.3
