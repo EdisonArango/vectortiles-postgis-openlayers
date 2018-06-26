@@ -34,3 +34,5 @@ NAME_COLUMN = 'nombre_provincia'
 
 ### Abrir en proyecto en `localhost:5000`
 > Los Vector Files se crearan dentro de `src/cache`, el rendimiento será bajo mientras estos son creados 
+
+> Adicionalmente el proyecto viene con PgAdmin, se accede a este por `localhost:5050`
