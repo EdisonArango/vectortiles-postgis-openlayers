@@ -19,58 +19,30 @@
         <div id="map" class="map"></div>
         <script src="https://openlayers.org/en/v4.6.5/build/ol-debug.js" type="text/javascript"></script>
         <script>
-            // Projection according to shp files
-            var chileProjection = new ol.proj.Projection({
-                code: 'EPSG:32719',
-                // The extent is used to determine zoom level 0. Recommended values for a
-                // projection's validity extent can be found at https://epsg.io/.
-                extent: [441867.78, 1116915.04, 833978.56, 10000000.00],
-                units: 'm'
-            });
-
-            var ecuadorProjection = new ol.proj.Projection({
-                code: 'EPSG:32717',
-                extent: [441867.78, 1116915.04, 833978.56, 10000000.00],
-                units: 'm'
-            });
-
-            ol.proj.addProjection(chileProjection);
-            ol.proj.addProjection(ecuadorProjection);
-
             var map = new ol.Map({
                 target: "map",
                 view: new ol.View({
-                    projection: 'EPSG:32719',
-                    // projection: ecuadorProjection,
-                    center: [0, 0],
-                    // Ecuador EPSG:32717
-                    // center: [765029.475890, 9837992.476532],
-                    // center: ol.proj.transform([765029.475890, 9837992.476532], 'EPSG:32717', 'EPSG:4326'),
+                    projection: 'EPSG:4326',
+                    // Ecuador
+                    center: [-78.398438, -1.436998],
                     // Santiago de Chile [lon, lat]
                     // center: [-70.653076, -33.425281],
-                    // center: ol.proj.fromLonLat([-70.9100261, -33.4724727]),
-                    zoom: 2
+                    zoom: 4
                 }),
                 layers: [
-                    /*new ol.layer.Tile({
+                    new ol.layer.Tile({
                         source: new ol.source.OSM()
-                    }),*/
+                    }),
                     /*new ol.layer.Vector({
-                        // projection: ecuadorProjection,
                         source: new ol.source.Vector({
-                            format: new ol.format.GeoJSON({
-                                defaultDataProjection: ecuadorProjection,
-                                featureProjection: ecuadorProjection
-                            }),
+                            format: new ol.format.GeoJSON(),
                             url: "{{ url_for('geo_json') }}"
                         })
                     })*/
                     new ol.layer.VectorTile({
                         source: new ol.source.VectorTile({
                             format: new ol.format.MVT(),
-                            url: "{{ url_for('tiles') }}/{z}/{x}/{y}",
-                            // projection: 'EPSG:32717'
-                            // projection: 'EPSG:4326'
+                            url: "{{ url_for('tiles') }}/{z}/{x}/{y}"
                         }),
                         style: function(feature, res) {
                             return new ol.style.Style({

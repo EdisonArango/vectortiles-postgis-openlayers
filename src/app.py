@@ -18,9 +18,10 @@ DB_USER = 'geo'
 DB_PASSWORD = 'geo'
 DB_NAME = 'geo24'
 
-GEO_TABLE = 'ecuador_provincias'
+GEO_TABLE = 'provincias_ecuador'
 ID_COLUMN = 'gid'
 NAME_COLUMN = 'dpa_provin'
+
 
 def tile_ul(x, y, z):
     n = 2.0 ** z
@@ -111,4 +112,7 @@ def geo_json():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, threaded=True)
+    if 'SERVER' in os.environ:
+        app.run(host="0.0.0.0", port=80)
+    else:
+        app.run(host="0.0.0.0", port=5000)

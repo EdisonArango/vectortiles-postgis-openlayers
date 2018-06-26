@@ -3,11 +3,13 @@ version: '3.1'
 services:
   web:
     build: .
+    container_name: vpo_web
     depends_on:
       - db
     volumes:
       - ./src:/src
-    command: python flask_mvt.py
+      - cachepbf:/src/cache
+    command: python app.py
     ports:
       - "5000:5000"
 
@@ -26,8 +28,10 @@ services:
 
   pg_admin:
     image: chorss/docker-pgadmin4
+    container_name: vpo_pgadmin
     ports:
       - "5050:5050"
 
 volumes:
   postgisdata:
+  cachepbf:
