@@ -18,9 +18,9 @@ DB_USER = 'geo'
 DB_PASSWORD = 'geo'
 DB_NAME = 'geo24'
 
-GEO_TABLE = 'regiones_chile'
+GEO_TABLE = 'ecuador_provincias'
 ID_COLUMN = 'gid'
-NAME_COLUMN = 'nombre'
+NAME_COLUMN = 'dpa_provin'
 
 def tile_ul(x, y, z):
     n = 2.0 ** z
@@ -36,7 +36,7 @@ def get_tile(z, x, y):
 
     tile = None
 
-    tilefolder = "{}/{}/{}".format(CACHE_DIR, z, x)
+    tilefolder = "{}/{}/{}/{}".format(CACHE_DIR, GEO_TABLE, z, x)
     tilepath = "{}/{}.pbf".format(tilefolder, y)
     if not os.path.exists(tilepath):
         conn = psycopg2.connect('dbname={0} user={1} password={2} host={3}'.format(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST))
@@ -63,6 +63,31 @@ def get_tile(z, x, y):
     return tile
 
 
+def get_tile_geojson():
+    conn = psycopg2.connect('dbname={0} user={1} password={2} host={3}'.format(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST))
+    cur = conn.cursor()
+    # query = "SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(features)) " \
+    #         "FROM (SELECT jsonb_build_object(" \
+    #         " 'type', 'Feature', 'id', {id_column}," \
+    #         " 'geometry', ST_AsGeoJSON(geom)," \
+    #         " 'properties', to_jsonb(inputs) - '{id_column}' - 'geom'" \
+    #         ") FROM (SELECT * FROM {table}) inputs) features;".format(table=GEO_TABLE, id_column=ID_COLUMN)
+    query = "SELECT ST_AsGeoJSON(geom) FROM {table}".format(table=GEO_TABLE, id_column=ID_COLUMN)
+    cur.execute(query)
+    row = cur.fetchone()
+    features = "["
+    while row:
+        features += str(row[0]) + ','
+        row = cur.fetchone()
+    features = features[:-1] + "]"
+    json = '{ "type": "FeatureCollection", "features": ' + features + ' }'
+    file = "{}/{}/{}".format(CACHE_DIR, GEO_TABLE, 'geo_json.json')
+    with open(file, 'wb') as f:
+        f.write(json)
+        f.close()
+    return json
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -74,6 +99,14 @@ def tiles(z=0, x=0, y=0):
     tile = get_tile(z, x, y)
     response = make_response(tile)
     response.headers['Content-Type'] = "application/octet-stream"
+    return response
+
+
+@app.route('/geo_json')
+def geo_json():
+    tile = get_tile_geojson()
+    response = make_response(tile)
+    response.headers['Content-Type'] = "application/json"
     return response
 
 
