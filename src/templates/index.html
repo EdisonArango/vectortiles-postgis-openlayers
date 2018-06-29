@@ -2,23 +2,58 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>MVT</title>
+        <title>VPO</title>
         <link rel="stylesheet" href="https://openlayers.org/en/v4.6.5/css/ol.css" type="text/css">
-    </head>
-    <body>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/black/pace-theme-flash.min.css">
         <style>
             #map {
                 position: absolute;
                 left: 0;
                 right: 0;
-                top: 0;
+                top: 35px;
                 bottom: 0;
                 padding: 10px;
             }
         </style>
+    </head>
+    <body>
+        <div class="options" style="padding-top: 5px;">
+            <span>Seleccionar Mapa:</span>
+            <select id="maps">
+                <option value="ecuador_provincial" selected>Organización Territorial del Estado Provincial</option>
+                <option value="ecuador_parroquial">Organización Territorial del Estado Parroquial</option>
+                <option value="ecuador_cantonal">Organización Territorial del Estado Cantonal</option>
+            </select>
+        </div>
         <div id="map" class="map"></div>
         <script src="https://openlayers.org/en/v4.6.5/build/ol-debug.js" type="text/javascript"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
         <script>
+            var baseURL = "{{ url_for('tiles') }}";
+            var currentMapName = "ecuador_provincial";
+            var mapColors = {
+                ecuador_provincial: "#2196F3",
+                ecuador_cantonal: "#f44336",
+                ecuador_parroquial: "#4CAF50"
+            };
+
+            var styleFunction = function(feature, res) {
+                return new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        width: 1,
+                        color: mapColors[currentMapName]
+                    })
+                })
+            };
+
+            var currentLayer = new ol.layer.VectorTile({
+                source: new ol.source.VectorTile({
+                    format: new ol.format.MVT(),
+                    url: baseURL + "/" + currentMapName + "/{z}/{x}/{y}"
+                }),
+                style: styleFunction
+            });
+
             var map = new ol.Map({
                 target: "map",
                 view: new ol.View({
@@ -33,28 +68,28 @@
                     new ol.layer.Tile({
                         source: new ol.source.OSM()
                     }),
+                    currentLayer
                     /*new ol.layer.Vector({
                         source: new ol.source.Vector({
                             format: new ol.format.GeoJSON(),
                             url: "{{ url_for('geo_json') }}"
                         })
                     })*/
-                    new ol.layer.VectorTile({
-                        source: new ol.source.VectorTile({
-                            format: new ol.format.MVT(),
-                            url: "{{ url_for('tiles') }}/{z}/{x}/{y}"
-                        }),
-                        style: function(feature, res) {
-                            return new ol.style.Style({
-                                stroke: new ol.style.Stroke({
-                                    width: 1,
-                                    color: 'rgba(0, 102, 204)'
-                                })
-                            })
-                        }
-                    })
                 ]
             });
+
+            function changeMap(e) {
+                console.log(e.srcElement.value);
+                currentMapName = e.srcElement.value;
+                currentLayer.set('style', styleFunction);
+                currentLayer.setSource(new ol.source.VectorTile({
+                    format: new ol.format.MVT(),
+                    url: baseURL + "/" + currentMapName + "/{z}/{x}/{y}"
+                }));
+            }
+
+            document.getElementById('maps').addEventListener('change', changeMap);
+
         </script>
     </body>
 </html>

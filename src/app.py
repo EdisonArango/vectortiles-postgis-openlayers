@@ -18,9 +18,21 @@ DB_USER = 'geo'
 DB_PASSWORD = 'geo'
 DB_NAME = 'geo24'
 
-GEO_TABLE = 'provincias_ecuador'
-ID_COLUMN = 'gid'
-NAME_COLUMN = 'dpa_provin'
+
+TABLES = {
+    'ecuador_provincial': {
+        'id_column': 'gid',
+        'name_column': 'dpa_despro'
+    },
+    'ecuador_cantonal': {
+        'id_column': 'gid',
+        'name_column': 'dpa_despro'
+    },
+    'ecuador_parroquial': {
+        'id_column': 'gid',
+        'name_column': 'dpa_despro'
+    }
+}
 
 
 def tile_ul(x, y, z):
@@ -31,21 +43,24 @@ def tile_ul(x, y, z):
     return lon_deg, lat_deg
 
 
-def get_tile(z, x, y):
+def get_tile(table, z, x, y):
     xmin, ymin = tile_ul(x, y, z)
     xmax, ymax = tile_ul(x + 1, y + 1, z)
 
     tile = None
 
-    tilefolder = "{}/{}/{}/{}".format(CACHE_DIR, GEO_TABLE, z, x)
+    tilefolder = "{}/{}/{}/{}".format(CACHE_DIR, table, z, x)
     tilepath = "{}/{}.pbf".format(tilefolder, y)
     if not os.path.exists(tilepath):
         conn = psycopg2.connect('dbname={0} user={1} password={2} host={3}'.format(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST))
         cur = conn.cursor()
 
+        id_column = TABLES[table]['id_column']
+        name_column = TABLES[table]['name_column']
+
         query = "SELECT ST_AsMVT(tile) FROM " \
                 "(SELECT {id_column}, {name_column}, ST_AsMVTGeom(geom, ST_Makebox2d(ST_transform(ST_SetSrid(ST_MakePoint(%s,%s),4326),3857),ST_transform(ST_SetSrid(ST_MakePoint(%s,%s),4326),3857)), 4096, 0, false)" \
-                " AS geom FROM {table}) AS tile".format(table=GEO_TABLE, id_column=ID_COLUMN, name_column=NAME_COLUMN)
+                " AS geom FROM {table}) AS tile".format(table=table, id_column=id_column, name_column=name_column)
         cur.execute(query, (xmin, ymin, xmax, ymax))
         tile = str(cur.fetchone()[0])
 
@@ -64,16 +79,19 @@ def get_tile(z, x, y):
     return tile
 
 
-def get_tile_geojson():
+def get_tile_geojson(table):
     conn = psycopg2.connect('dbname={0} user={1} password={2} host={3}'.format(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST))
     cur = conn.cursor()
+
+    id_column = TABLES[table]['id_column']
+
     # query = "SELECT jsonb_build_object('type', 'FeatureCollection', 'features', jsonb_agg(features)) " \
     #         "FROM (SELECT jsonb_build_object(" \
     #         " 'type', 'Feature', 'id', {id_column}," \
     #         " 'geometry', ST_AsGeoJSON(geom)," \
     #         " 'properties', to_jsonb(inputs) - '{id_column}' - 'geom'" \
     #         ") FROM (SELECT * FROM {table}) inputs) features;".format(table=GEO_TABLE, id_column=ID_COLUMN)
-    query = "SELECT ST_AsGeoJSON(geom) FROM {table}".format(table=GEO_TABLE, id_column=ID_COLUMN)
+    query = "SELECT ST_AsGeoJSON(geom) FROM {table}".format(table=table, id_column=id_column)
     cur.execute(query)
     row = cur.fetchone()
     features = "["
@@ -82,7 +100,7 @@ def get_tile_geojson():
         row = cur.fetchone()
     features = features[:-1] + "]"
     json = '{ "type": "FeatureCollection", "features": ' + features + ' }'
-    file = "{}/{}/{}".format(CACHE_DIR, GEO_TABLE, 'geo_json.json')
+    file = "{}/{}/{}".format(CACHE_DIR, table, 'geo_json.json')
     with open(file, 'wb') as f:
         f.write(json)
         f.close()
@@ -95,17 +113,18 @@ def index():
 
 
 @app.route('/tiles')
-@app.route('/tiles/<int:z>/<int:x>/<int:y>', methods=['GET'])
-def tiles(z=0, x=0, y=0):
-    tile = get_tile(z, x, y)
+@app.route('/tiles/<string:table>/<int:z>/<int:x>/<int:y>', methods=['GET'])
+def tiles(table='ecuador_provincial', z=0, x=0, y=0):
+    tile = get_tile(table, z, x, y)
     response = make_response(tile)
     response.headers['Content-Type'] = "application/octet-stream"
     return response
 
 
 @app.route('/geo_json')
-def geo_json():
-    tile = get_tile_geojson()
+@app.route('/geo_json/<string:table>')
+def geo_json(table='ecuador_provincial'):
+    tile = get_tile_geojson(table)
     response = make_response(tile)
     response.headers['Content-Type'] = "application/json"
     return response

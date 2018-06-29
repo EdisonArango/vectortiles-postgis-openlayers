@@ -4,3 +4,4 @@ venv
 .idea
 src/cache
 .DS_Store
+excluded

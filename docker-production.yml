@@ -2,15 +2,20 @@ version: '3.1'
 
 services:
   web:
-    build: .
-    container_name: vpo_web
+    image: edisonarango/vpo:latest
+    environment:
+      SERVER: "True"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
     depends_on:
       - db
     volumes:
-      - ./src:/src
+      - cachepbf:/src/cache
     command: python app.py
     ports:
-      - "5000:5000"
+      - "80:80"
 
   db:
     image: mdillon/postgis:latest
@@ -23,7 +28,7 @@ services:
       - postgisdata:/var/lib/postgresql/data
       - ./shapefiles:/shapefiles
     ports:
-      - "5432:5432"
+      - "5432"
 
   pg_admin:
     image: chorss/docker-pgadmin4

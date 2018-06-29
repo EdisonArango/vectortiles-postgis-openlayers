@@ -3,5 +3,6 @@ venv
 .idea
 src/cache
 shapefiles
+excluded
 .DS_Store
 *.pyc
