@@ -16,10 +16,11 @@ services:
     command: python app.py
     ports:
       - "80:80"
+    networks:
+      - webnet
 
   db:
     image: mdillon/postgis:latest
-    container_name: vpo_postgis
     environment:
       POSTGRES_DB: geo24
       POSTGRES_USER: geo
@@ -29,12 +30,18 @@ services:
       - ./shapefiles:/shapefiles
     ports:
       - "5432"
+    networks:
+      - webnet
 
   pg_admin:
     image: chorss/docker-pgadmin4
-    container_name: vpo_pgadmin
     ports:
       - "5050:5050"
+    networks:
+      - webnet
+
+networks:
+  webnet:
 
 volumes:
   postgisdata:
